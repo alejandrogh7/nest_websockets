@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Chat</title>
+    <script src="http://localhost:3001/socket.io/socket.io.js"></script>
+  </head>
+  <body>
+    <div id="app">
+        <h1>Type something</h1>
+        <form id="form">
+          <input type="text" placeholder="Type" id="message"/>
+          <button>Send</button>
+        </form>
+        <p>
+            <ul id="messages_list">
+            </ul>
+        </p>
+    </div>
+    <script>        
+        const form = document.querySelector('#form')
+        const message = document.querySelector("#message")
+        const m_list = document.querySelector('#messages_list')
+
+        function addNode(value) {
+            const li_node = document.createElement('li')
+            li_node.textContent = value
+            return li_node
+        }
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault()
+            socket.emit('message', message.value)
+            message.value = ''
+        })
+
+        let socket = io('http://localhost:3001/')
+        socket.on('message', (msg) => {
+            m_list.appendChild(addNode(msg))
+        })
+    </script>
+  </body>
+</html>
