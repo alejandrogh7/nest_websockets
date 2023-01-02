@@ -2,7 +2,39 @@
 <html lang="en">
   <head>
     <title>Chat</title>
-    <script src="http://localhost:3001/socket.io/socket.io.js"></script>
+    <!-- <script src="http://localhost:3001/socket.io/socket.io.js"></script> -->
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        ul {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        li {
+           display: flex; 
+           flex-direction: row;
+           justify-content: flex-start;
+           align-items: center;
+           text-align: center;
+           gap: 10px;
+           width: 400px;
+           border-radius: 20px;
+           background-color: gray;
+           padding: 10px;
+        }
+
+        strong {
+            font-size: 24px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        li p {
+            text-transform: capitalize;
+            font-size: 16px;
+        }
+    </style>
   </head>
   <body>
     <div id="app">
@@ -21,21 +53,29 @@
         const message = document.querySelector("#message")
         const m_list = document.querySelector('#messages_list')
 
-        function addNode(value) {
+        const username = prompt('Enter username:')
+
+        function addNode(value, sender) {
             const li_node = document.createElement('li')
-            li_node.textContent = value
+            const str_sender = document.createElement('strong')
+            const msg_value = document.createElement('p')
+            str_sender.textContent = sender;
+            msg_value.textContent = value
+            li_node.appendChild(str_sender)
+            li_node.appendChild(msg_value)
             return li_node
         }
 
         form.addEventListener("submit", (event) => {
             event.preventDefault()
-            socket.emit('message', message.value)
+            // socket.emit('message', message.value)
+            socket.emit('chatToServer', {sender: username, message: message.value})
             message.value = ''
         })
 
-        let socket = io('http://localhost:3001/')
-        socket.on('message', (msg) => {
-            m_list.appendChild(addNode(msg))
+        let socket = io('http://localhost:3000/')
+        socket.on('chatToClient', (msg) => {
+            m_list.appendChild(addNode(msg.message, msg.sender))
         })
     </script>
   </body>
