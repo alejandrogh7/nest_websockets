@@ -43,40 +43,85 @@
           <input type="text" placeholder="Type" id="message"/>
           <button>Send</button>
         </form>
+        <div>
+            <button class="act-rooms" name="general" value="general">General</button>
+            <button class="act-rooms" name="videogames" value="videogames">Videogames</button>
+        </div>
         <p>
             <ul id="messages_list">
             </ul>
         </p>
     </div>
-    <script>        
+    <script>
+        let activeRoom = 'general'
+        const rooms = {general: false, videogames: false}
         const form = document.querySelector('#form')
         const message = document.querySelector("#message")
         const m_list = document.querySelector('#messages_list')
-
+        const handleRooms = document.querySelectorAll('.act-rooms')
         const username = prompt('Enter username:')
 
-        function addNode(value, sender) {
+        let socket = io('http://localhost:3000/')
+        socket.on('chatToClient', (msg) => {
+            m_list.appendChild(addNode(msg.message, msg.sender, msg.room))
+        })
+
+       socket.on('connect', () => {
+        toggleRoomMembership()
+       })
+
+       socket.on('joinedRoom', (room) => {
+        rooms[room] = true
+       })
+
+       socket.on('leftRoom', (room) => {
+        rooms[room] = false
+       })
+
+        function isActiveRoom() {
+            return rooms[activeRoom];
+        }
+
+        function addNode(value, sender, room) {
             const li_node = document.createElement('li')
             const str_sender = document.createElement('strong')
             const msg_value = document.createElement('p')
+            const shw_room = document.createElement('p')
+            shw_room.textContent = room
             str_sender.textContent = sender;
             msg_value.textContent = value
             li_node.appendChild(str_sender)
-            li_node.appendChild(msg_value)
+            li_node.appendChild(shw_room)
+            li_node.appendChild(msg_value)            
             return li_node
+        }
+
+        handleRooms.forEach((el) => {
+            el.addEventListener('click', (event) => {
+                event.preventDefault()
+                socket.emit('joinRoom', activeRoom);
+                activeRoom = event.target.value
+            })
+        })
+        
+        function toggleRoomMembership() {
+            if(isActiveRoom()) {
+                socket.emit('leaveRoom', activeRoom)
+            } else {
+                socket.emit('joinRoom', activeRoom)
+            }
         }
 
         form.addEventListener("submit", (event) => {
             event.preventDefault()
             // socket.emit('message', message.value)
-            socket.emit('chatToServer', {sender: username, message: message.value})
-            message.value = ''
-        })
-
-        let socket = io('http://localhost:3000/')
-        socket.on('chatToClient', (msg) => {
-            m_list.appendChild(addNode(msg.message, msg.sender))
-        })
+            if(isActiveRoom()) {
+                socket.emit('chatToServer', {sender: username, message: message.value, room: activeRoom})
+                message.value = ''
+            } else {
+                alert('Join in a room to send a message')
+            }                       
+        })        
     </script>
   </body>
 </html>
